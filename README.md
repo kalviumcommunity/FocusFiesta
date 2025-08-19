@@ -6,12 +6,6 @@ Built with the **MERN stack (MongoDB, Express.js, React, Node.js)**.
 
 ---
 
-## 🖼️ Design & Prototype
-- 🎨 **Figma Design**: [View Design](https://www.figma.com/design/l9r3elRU9guEO9cQuL4qSO/FocusFiesta?node-id=7-4&t=gj1UbveoFvebnnTE-1)  
-- 🖥️ **Figma Prototype**: [View Prototype](https://www.figma.com/proto/l9r3elRU9guEO9cQuL4qSO/FocusFiesta?page-id=7%3A4&node-id=20-175&p=f&viewport=194%2C216%2C0.25&t=ECEB3jgD1IYrCl0s-1&scaling=scale-down&content-scaling=fixed)  
-
----
-
 ## 🌟 Features
 
 - 🔐 **Authentication**
