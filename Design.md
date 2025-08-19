@@ -1,68 +1,167 @@
-## FocusFiesta Design Documentation
+# Low-Level Design — Productivity App
 
-### Overview
-This document outlines the design principles, decisions, and resources for the FocusFiesta project. The goal is to create a clean, user-friendly interface with a light blue and white theme.
 
-FocusFiesta is a productivity app designed to help users manage tasks and focus sessions in a visually appealing, distraction-free environment. The design emphasizes clarity, simplicity, and motivation.
+```text
++--------------------------------------------------+
+|                    Frontend                      |
+|         React (Vite) + Context API               |
+|                                                  |
+| Pages:                                           |
+|  - Landing                                       |
+|  - Login / Signup                                |
+|  - Dashboard                                     |
+|  - Tasks + Pomodoro                              |
+|  - Chat (WebSocket)                              |
+|  - Stats / Reports                               |
++--------------------------------------------------+
+                       |
+                       |   REST + WS
+                       v
++--------------------------------------------------+
+|                    Backend                       |
+|               Node.js + Express                  |
+|                                                  |
+| Modules:                                         |
+|  - Auth (JWT + Cookies)                          |
+|  - Task Manager (CRUD)                           |
+|  - Pomodoro Logs                                 |
+|  - Chat Service (Socket.IO)                      |
+|  - Stats Export (CSV / JSON)                     |
+|  - Google Calendar Sync                          |
++--------------------------------------------------+
+                       |
+                       v
++--------------------------------------------------+
+|                    Database                      |
+|             MongoDB (Mongoose)                   |
+|                                                  |
+| Schemas:                                         |
+|  - User (email, passwordHash, tokens)            |
+|  - Task (title, desc, dueDate, status, eventId)  |
+|  - PomodoroLog (taskId, duration, status)        |
+|  - Message (senderId, receiverId, content, ts)   |
++--------------------------------------------------+
 
-### Figma Design
-You can view the latest designs and wireframes in our Figma project:
 
-- Low Level Design and High Level Design [Figma Design Link](https://www.figma.com/design/l9r3elRU9guEO9cQuL4qSO/FocusFiesta?node-id=0-1&t=gj1UbveoFvebnnTE-1)
+```
 
-#### Screenshots
-**High Level Design (HLD):**
-![High Level Design](assets/HLD.png)
+### System Architechture design
 
-**Low Level Design (LD):**
-![Low Level Design](assets/LLD.png)
+``` text 
+flowchart LR
+    subgraph Client [Frontend - React]
+      A[TaskList] -->|CRUD| B[TaskContext]
+      C[PomodoroTimer] -->|Logs| D[PomodoroContext]
+      E[ChatBox] -->|Messages| F[ChatContext]
+      G[Auth UI] -->|Login/Signup| H[AuthContext]
+    end
 
-#### Example Screens
-- **Home Dashboard:** Displays active focus sessions, quick stats, and motivational quotes.
-- **Task Manager:** Allows users to add, edit, and organize tasks with color-coded priorities.
-- **Session Timer:** Minimalist timer interface with progress visualization.
+    subgraph Server [Backend - Express.js]
+      I[AuthController]
+      J[TaskController]
+      K[PomodoroController]
+      L[ChatController]
+    end
 
-### Color Palette
-- **Primary Color:** Light Blue (`#9AC9DE`)
-- **Background:** White (`#FFFFFF`)
+    subgraph DB [MongoDB]
+      M[(Users)]
+      N[(Tasks)]
+      O[(PomodoroLogs)]
+      P[(Messages)]
+    end
 
-#### Usage
-- Buttons, highlights, and icons use the primary light blue for emphasis.
-- Backgrounds and cards use white for a clean look.
-- Shadows and borders use subtle gray tones for depth.
+    H-->|JWT|I
+    B-->|API|J
+    D-->|API|K
+    F-->|Socket.IO|L
 
-### Typography
-Use clean, modern sans-serif fonts for readability and simplicity.
+    I-->|CRUD|M
+    J-->|CRUD|N
+    K-->|CRUD|O
+    L-->|CRUD|P
+```
+## Database Schema (MongoDB Example)
 
-Recommended fonts: Inter, Roboto, or Open Sans.
+users collection
+ ```json
+ {
+  _id: ObjectId,
+  name: String,
+  email: String,
+  passwordHash: String,
+  role: { type: String, enum: ["user", "admin"], default: "user" },
+  createdAt: Date
+}
+```
 
-### Layout & Wireframes
-Refer to the Figma link above for detailed layouts and wireframes of all screens.
+### Auth and User Management
 
-All screens follow a grid-based layout for consistency. Spacing and padding are generous to reduce clutter.
+```text  
++-------------------------------+
+|   Auth Module                 |
+|   (JWT + Cookies)             |
++-------------------------------+
+         |
+         | POST /signup
+         | POST /login
+         | GET /me
+         v
++-------------------------------+
+| Auth Controller               |
+| - validate input              |
+| - call Auth Service           |
++-------------------------------+
+         |
+         v
++-------------------------------+
+| Auth Service                  |
+| - hash/compare password       |
+| - sign/verify JWT             |
+| - manage cookies              |
++-------------------------------+
+         |
+         v
++-------------------------------+
+| User Schema (MongoDB)         |
+| - email                       |
+| - passwordHash                |
+| - tokens[]                    |
++-------------------------------+
+```
 
-### User Flow
-The user flow is designed to be intuitive, minimizing friction and focusing on core tasks. See Figma for diagrams.
+### How Task management will work
+ ```text 
 
-1. User lands on the dashboard.
-2. Starts a focus session or reviews tasks.
-3. Completes tasks and receives feedback.
-4. Can view session history and productivity stats.
-
-### Accessibility
-Ensure sufficient contrast between text and background. Use accessible font sizes and clear labels.
-
-- All interactive elements have clear focus states.
-- Color contrast meets WCAG AA standards.
-- Icons have descriptive alt text.
-- Supports keyboard navigation.
-
-### Design Guidelines for Contributors
-- Maintain consistency with the color palette and typography.
-- Follow wireframes and layouts as per Figma.
-- Prioritize usability and accessibility in all design decisions.
-
-- Use reusable components for buttons, cards, and forms.
-- Test designs on multiple screen sizes.
-- Document any new design patterns in this file.
-
+ +-------------------------------+
+|   Task Module (CRUD)          |
++-------------------------------+
+         |
+         | GET /tasks
+         | POST /tasks
+         | PUT /tasks/:id
+         | DELETE /tasks/:id
+         v
++-------------------------------+
+| Task Controller               |
+| - parse request               |
+| - call Task Service           |
++-------------------------------+
+         |
+         v
++-------------------------------+
+| Task Service                  |
+| - validate data               |
+| - assign userId               |
+| - handle sync with Calendar   |
++-------------------------------+
+         |
+         v
++-------------------------------+
+| Task Schema (MongoDB)         |
+| - title                       |
+| - description                 |
+| - dueDate                     |
+| - status (pending, done)      |
+| - eventId (for calendar sync) |
++-------------------------------+
+```
