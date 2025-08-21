@@ -20,13 +20,14 @@ export default function Navbar({ onAddTask }) {
           {/* Logo and Brand */}
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center group">
-              <div className="w-16 h-16 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
-                <img 
-                  src={FocusFiestaLogo} 
-                  alt="FocusFiesta Logo" 
-                  className="w-78 h-78 object-contain"
-                />
-              </div>
+            <div className="w-32 h-32 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+  <img 
+    src={FocusFiestaLogo} 
+    alt="FocusFiesta Logo" 
+    className="w-32 h-32 object-contain"
+  />
+</div>
+
             </Link>
           </div>
 
