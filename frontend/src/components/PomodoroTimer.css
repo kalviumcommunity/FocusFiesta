@@ -1,0 +1,381 @@
+/* ========================================
+   FocusFiesta - Enhanced Pomodoro Timer Styles
+   ======================================== */
+
+/* Import global design system variables */
+@import '../styles/global.css';
+
+/* ========================================
+   Timer Container & Base Styles
+   ======================================== */
+
+.pomodoro-timer-container {
+  transition: all var(--transition-slow);
+  will-change: transform, opacity;
+}
+
+/* ========================================
+   Mini Timer - Floating Mode
+   ======================================== */
+
+.pomodoro-mini-timer {
+  position: fixed;
+  bottom: var(--space-md);
+  left: var(--space-md);
+  z-index: 9999;
+  
+  /* Enhanced Glass Morphism Design */
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: var(--radius-xl);
+  
+  /* Sophisticated Shadow System */
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1), 
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(59, 130, 246, 0.1);
+  
+  padding: var(--space-md);
+  min-width: 220px;
+  
+  /* Smooth Animations */
+  transform: translateY(0) scale(1);
+  transition: all var(--transition-slow);
+  animation: slideInFromBottom var(--transition-slow) ease-out;
+  
+  /* Performance Optimizations */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  contain: layout style paint;
+  isolation: isolate;
+}
+
+/* Enhanced Hover Effects */
+.pomodoro-mini-timer:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+/* ========================================
+   Full Timer - Expanded Mode
+   ======================================== */
+
+.pomodoro-full-timer {
+  transition: all var(--transition-slow);
+  animation: expandFromCenter var(--transition-slow) ease-out;
+  
+  /* Performance Optimizations */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* ========================================
+   Timer Header & Interactive Elements
+   ======================================== */
+
+.pomodoro-mini-timer .cursor-pointer {
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  margin: calc(-1 * var(--space-sm));
+}
+
+.pomodoro-mini-timer .cursor-pointer:hover {
+  background-color: rgba(249, 250, 251, 0.9);
+  transform: scale(1.02);
+}
+
+/* Enhanced Group Hover Effects */
+.pomodoro-mini-timer .group:hover .group-hover\:text-blue-600 {
+  color: var(--color-primary-dark);
+}
+
+.pomodoro-mini-timer .group:hover .group-hover\:text-blue-500 {
+  color: var(--color-primary);
+}
+
+.pomodoro-mini-timer .group:hover .group-hover\:text-blue-400 {
+  color: var(--color-primary-light);
+}
+
+/* ========================================
+   Timer Controls & Buttons
+   ======================================== */
+
+.pomodoro-mini-timer button {
+  transition: all var(--transition-normal);
+  transform-origin: center;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.pomodoro-mini-timer button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.pomodoro-mini-timer button:hover::before {
+  left: 100%;
+}
+
+.pomodoro-mini-timer button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.pomodoro-mini-timer button:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-out;
+}
+
+/* Enhanced Focus States for Accessibility */
+.pomodoro-mini-timer button:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* ========================================
+   Progress Indicators & Visual Elements
+   ======================================== */
+
+/* Progress Bar with Enhanced Animations */
+.pomodoro-progress-bar {
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.pomodoro-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+/* Active Timer Indicator */
+.pomodoro-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  border-radius: 50%;
+}
+
+/* ========================================
+   Notification System
+   ======================================== */
+
+.pomodoro-notification {
+  animation: slideInFromRight var(--transition-normal) ease-out;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  backdrop-filter: blur(8px);
+}
+
+/* ========================================
+   Keyframe Animations
+   ======================================== */
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes expandFromCenter {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+/* Tablet Adjustments */
+@media (max-width: 768px) {
+  .pomodoro-mini-timer {
+    bottom: var(--space-sm);
+    left: var(--space-sm);
+    right: var(--space-sm);
+    min-width: auto;
+    width: calc(100vw - 2rem);
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 640px) {
+  .pomodoro-mini-timer {
+    bottom: var(--space-sm);
+    left: var(--space-sm);
+    right: var(--space-sm);
+    padding: var(--space-md);
+    min-width: auto;
+    width: calc(100vw - 2rem);
+  }
+  
+  .pomodoro-mini-timer .text-2xl {
+    font-size: 1.5rem;
+  }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+  .pomodoro-mini-timer {
+    bottom: var(--space-sm);
+    left: var(--space-sm);
+    right: var(--space-sm);
+    padding: var(--space-md);
+    min-width: auto;
+    width: calc(100vw - 2rem);
+  }
+  
+  .pomodoro-mini-timer .text-2xl {
+    font-size: 1.25rem;
+  }
+  
+  .pomodoro-mini-timer button {
+    padding: var(--space-sm);
+    font-size: 0.75rem;
+  }
+}
+
+/* Notification Responsiveness */
+@media (max-width: 640px) {
+  .pomodoro-notification {
+    top: var(--space-md);
+    right: var(--space-md);
+    left: var(--space-md);
+    width: auto;
+    max-width: calc(100vw - 2rem);
+  }
+}
+
+/* ========================================
+   Performance Optimizations
+   ======================================== */
+
+.pomodoro-mini-timer,
+.pomodoro-full-timer {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* ========================================
+   Accessibility Enhancements
+   ======================================== */
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .pomodoro-mini-timer {
+    border: 2px solid var(--color-gray-900);
+    background: white;
+  }
+  
+  .pomodoro-mini-timer button {
+    border: 1px solid var(--color-gray-900);
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .pomodoro-mini-timer,
+  .pomodoro-full-timer,
+  .pomodoro-notification {
+    animation: none;
+    transition: none;
+  }
+  
+  .pomodoro-mini-timer button:hover {
+    transform: none;
+  }
+  
+  .pomodoro-progress-bar::after {
+    animation: none;
+  }
+}
+
+/* ========================================
+   Dark Mode Support (Future Enhancement)
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+  .pomodoro-mini-timer {
+    background: rgba(31, 41, 55, 0.98);
+    border-color: rgba(75, 85, 99, 0.8);
+    color: white;
+  }
+  
+  .pomodoro-mini-timer .cursor-pointer:hover {
+    background-color: rgba(55, 65, 81, 0.9);
+  }
+}

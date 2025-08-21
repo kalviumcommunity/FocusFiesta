@@ -25,13 +25,20 @@ exports.createTask = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Task title is required' });
     }
 
-    const task = await Task.create({
+    // Prepare task data with proper validation
+    const taskData = {
       title,
       description,
       dueDate: dueDate ? new Date(dueDate) : undefined,
-      estimatedPomodoros: estimatedPomodoros !== undefined ? Number(estimatedPomodoros) : undefined,
       userId: req.user.userId,
-    });
+    };
+
+    // Only add estimatedPomodoros if it's a valid positive number
+    if (estimatedPomodoros !== undefined && estimatedPomodoros !== null && estimatedPomodoros > 0) {
+      taskData.estimatedPomodoros = Number(estimatedPomodoros);
+    }
+
+    const task = await Task.create(taskData);
 
     // Optionally create Google Calendar event
     if (addToGoogleCalendar && dueDate) {
@@ -65,7 +72,12 @@ exports.updateTask = async (req, res) => {
     if (title !== undefined) updatedFields.title = title;
     if (description !== undefined) updatedFields.description = description;
     if (dueDate !== undefined) updatedFields.dueDate = dueDate ? new Date(dueDate) : undefined;
-    if (estimatedPomodoros !== undefined) updatedFields.estimatedPomodoros = Number(estimatedPomodoros);
+    if (estimatedPomodoros !== undefined && estimatedPomodoros !== null && estimatedPomodoros > 0) {
+      updatedFields.estimatedPomodoros = Number(estimatedPomodoros);
+    } else if (estimatedPomodoros === null || estimatedPomodoros === 0) {
+      // Allow setting to null/0 to remove the field
+      updatedFields.estimatedPomodoros = undefined;
+    }
     if (isCompleted !== undefined) updatedFields.isCompleted = isCompleted;
 
     const task = await Task.findOneAndUpdate(
