@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import TaskCard from '../components/TaskCard';
 import TaskForm from '../components/TaskForm';
 import PomodoroTimer from '../components/PomodoroTimer';
+import { usePomodoro } from '../contexts/PomodoroContext.jsx';
 import { FaPlus, FaClock, FaCheckCircle } from 'react-icons/fa';
 
 export default function Dashboard() {
@@ -18,6 +19,7 @@ export default function Dashboard() {
     deleteTask, 
     toggleTaskCompletion 
   } = useTasks();
+  const { currentTask } = usePomodoro();
 
   // Handle Google OAuth redirect to dashboard
   useEffect(() => {
@@ -32,6 +34,15 @@ export default function Dashboard() {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
+
+  // If navigated with ?full=1 and there is a currentTask in context, ensure full view appears
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const wantsFull = params.get('full') === '1';
+    if (wantsFull && currentTask && !selectedTask) {
+      setSelectedTask(currentTask);
+    }
+  }, [currentTask]);
 
   const handleAddTask = () => {
     setEditingTask(null);
@@ -220,12 +231,13 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Pomodoro Timer */}
+        {/* Pomodoro Timer - render only if a task is selected locally */}
         {selectedTask && (
-          <div className="fixed bottom-6 right-6 z-40">
+          <div className="fixed bottom-6 left-6 z-40">
             <PomodoroTimer
               task={selectedTask}
               onComplete={handleTimerComplete}
+              onClose={() => setSelectedTask(null)}
             />
           </div>
         )}

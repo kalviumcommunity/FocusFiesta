@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { PomodoroProvider } from './contexts/PomodoroContext.jsx';
+import PomodoroFloating from './components/PomodoroFloating.jsx';
 import { TaskProvider } from './contexts/TaskContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -62,9 +64,12 @@ const AppRoutes = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
+      <PomodoroProvider>
+        <Router>
+          <AppRoutes />
+          <PomodoroFloating />
+        </Router>
+      </PomodoroProvider>
     </AuthProvider>
   );
 }

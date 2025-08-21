@@ -50,6 +50,9 @@
   transform-style: preserve-3d;
   contain: layout style paint;
   isolation: isolate;
+  
+  /* Ensure text is visible */
+  color: var(--color-gray-900);
 }
 
 /* Enhanced Hover Effects */
@@ -59,6 +62,41 @@
     0 20px 25px -5px rgba(0, 0, 0, 0.1), 
     0 10px 10px -5px rgba(0, 0, 0, 0.04),
     0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+/* Ensure time display is highly visible */
+.pomodoro-mini-timer .text-2xl {
+  color: white !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  font-weight: 700;
+}
+
+/* Make clickable header more obvious */
+.pomodoro-mini-timer .cursor-pointer {
+  cursor: pointer !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Force time visibility with inline styles */
+.pomodoro-mini-timer .text-2xl[style*="color: #ffffff"] {
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  font-weight: 800;
+}
+
+/* Ensure header click area is properly interactive */
+.pomodoro-mini-timer .cursor-pointer:hover {
+  background-color: rgba(249, 250, 251, 0.9) !important;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Remove any conflicting text colors */
+.pomodoro-mini-timer .text-2xl {
+  color: white !important;
 }
 
 /* ========================================

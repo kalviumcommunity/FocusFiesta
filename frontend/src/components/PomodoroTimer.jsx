@@ -1,21 +1,29 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { logSession } from '../api/sessions';
-import { useTasks } from '../contexts/TaskContext';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { usePomodoro } from '../contexts/PomodoroContext.jsx';
 import './PomodoroTimer.css';
 
-const notificationSound = new Audio('/public/notification.mp3');
-
-export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMinutes = 5, taskId, taskTitle }) {
-  const { fetchTasks } = useTasks();
+export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMinutes = 5, task, onClose }) {
+  const {
+    minutes,
+    seconds,
+    isRunning,
+    isBreak,
+    workDuration,
+    breakDuration,
+    sessionDuration,
+    currentTask,
+    isTimerMounted,
+    setIsTimerMounted,
+    start,
+    stop,
+    reset,
+    updateWorkDuration,
+    updateBreakDuration,
+    selectTask,
+  } = usePomodoro();
   
-  // Timer state variables
-  const [workDuration, setWorkDuration] = useState(initialMinutes);
-  const [breakDuration, setBreakDuration] = useState(breakMinutes);
-  const [minutes, setMinutes] = useState(initialMinutes);
-  const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isBreak, setIsBreak] = useState(false);
-  const [sessionDuration, setSessionDuration] = useState(0);
+  // Extract task information
+  const taskTitle = task?.title;
   
   // Mini mode state management
   const [isMiniMode, setIsMiniMode] = useState(false);
@@ -34,25 +42,28 @@ export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMi
 
   // Memoize handlers to prevent re-creation on every render
   const handleStart = useCallback(() => {
-    setIsRunning(true);
-    if (!isBreak) {
-      setSessionDuration(0); // Reset session duration for new focus session
-    }
-  }, [isBreak]);
+    start({ task, onComplete });
+  }, [start, task, onComplete]);
 
-  const handleStop = useCallback(() => setIsRunning(false), []);
+  const handleStop = useCallback(() => {
+    stop();
+  }, [stop]);
   
   const handleReset = useCallback(() => {
-    setIsRunning(false);
-    setIsBreak(false);
-    setMinutes(workDuration);
-    setSeconds(0);
-    setSessionDuration(0);
-  }, [workDuration]);
+    reset();
+  }, [reset]);
 
-  const handleMiniModeToggle = useCallback(() => {
-    setIsMiniMode(false);
-  }, []);
+  // const handleMiniModeToggle = useCallback(() => {
+  //   console.log('Mini mode toggle clicked, current isMiniMode:', isMiniMode);
+  //   setIsMiniMode(prev => {
+  //     console.log('Setting isMiniMode to:', !prev);
+  //     return !prev;
+  //   });
+  // }, [isMiniMode]);
+
+  const handleMiniModeToggle = () => {
+    setIsMiniMode(prev => !prev);
+  }
 
   const handleNotificationClose = useCallback(() => {
     setShowMiniModeNotification(false);
@@ -60,112 +71,53 @@ export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMi
 
   // Update current timer when user changes durations while paused
   const onChangeWorkDuration = useCallback((value) => {
-    const safe = Math.max(1, Number(value) || 1);
-    setWorkDuration(safe);
-    if (!isRunning && !isBreak) {
-      setMinutes(safe);
-      setSeconds(0);
-    }
-  }, [isRunning, isBreak]);
+    updateWorkDuration(value);
+  }, [updateWorkDuration]);
 
   const onChangeBreakDuration = useCallback((value) => {
-    const safe = Math.max(1, Number(value) || 1);
-    setBreakDuration(safe);
-    if (!isRunning && isBreak) {
-      setMinutes(safe);
-      setSeconds(0);
-    }
-  }, [isRunning, isBreak]);
+    updateBreakDuration(value);
+  }, [updateBreakDuration]);
 
-  // Auto-switch to mini mode when timer starts
-  // This provides a seamless user experience by automatically minimizing the timer
-  // when it's running, allowing users to continue working while keeping track of time
+  // Reset timer when task changes
   useEffect(() => {
-    if (isRunning && !isMiniMode) {
-      // Immediate switch to mini mode for responsive feel
+    if (task && (!currentTask || currentTask._id !== task._id)) {
+      selectTask(task);
+      setIsMiniMode(false);
+    }
+  }, [task, currentTask, selectTask]);
+
+  // Mark this timer UI as mounted/unmounted globally
+  useEffect(() => {
+    setIsTimerMounted(true);
+    return () => setIsTimerMounted(false);
+  }, [setIsTimerMounted]);
+
+  // Auto-switch to mini mode only when the timer transitions from paused->running while this component is mounted
+  const prevIsRunningRef = useRef(isRunning);
+  useEffect(() => {
+    const wasRunning = prevIsRunningRef.current;
+    prevIsRunningRef.current = isRunning;
+    if (!wasRunning && isRunning && !isMiniMode) {
       setIsMiniMode(true);
       setShowMiniModeNotification(true);
-      // Hide notification after 3 seconds to avoid cluttering the UI
       setTimeout(() => setShowMiniModeNotification(false), 3000);
-    } else if (!isRunning && isMiniMode) {
-      // Small delay to allow for smooth transition back to full mode
-      // This ensures the mini timer doesn't disappear abruptly
-      const timer = setTimeout(() => {
-        setIsMiniMode(false);
-      }, 200);
-      return () => clearTimeout(timer);
     }
+    // Removed the automatic switch back to full mode to allow manual control
   }, [isRunning, isMiniMode]);
 
-  useEffect(() => {
-    let timer;
-    if (isRunning) {
-      timer = setInterval(() => {
-        if (seconds > 0) {
-          setSeconds(seconds - 1);
-        } else if (minutes > 0) {
-          setMinutes(minutes - 1);
-          setSeconds(59);
-        } else {
-          if (!isBreak) {
-            // Focus session completed - log it to backend
-            if (taskId) {
-              logSessionToBackend();
-            }
-            notificationSound.play(); // Play sound notification
-            setIsBreak(true);
-            setMinutes(breakDuration);
-            setSeconds(0);
-            onComplete && onComplete();
-          } else {
-            // Break completed
-            notificationSound.play(); // Play sound notification
-            setIsBreak(false);
-            setMinutes(workDuration);
-            setSeconds(0);
-          }
-        }
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isRunning, minutes, seconds, isBreak, workDuration, breakDuration, onComplete, taskId]);
+  // Timer logic moved to context
 
-  // Track session duration
-  useEffect(() => {
-    if (isRunning && !isBreak) {
-      const interval = setInterval(() => {
-        setSessionDuration(prev => prev + 1);
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isRunning, isBreak]);
-
-  const logSessionToBackend = async () => {
-    try {
-      if (!taskId) {
-        console.error('No task ID provided');
-        return;
-      }
-
-      await logSession(taskId, sessionDuration);
-      // Refresh tasks so completedPomodoros updates in UI
-      if (fetchTasks) {
-        fetchTasks();
-      }
-      console.log('Session logged successfully');
-    } catch (error) {
-      console.error('Error logging session:', error);
-    }
-  };
-
-  // Memoize the MiniTimer component to prevent re-creation
+  // Memoize the MiniTimer component
   const MiniTimer = useMemo(() => (
     <div className="pomodoro-mini-timer">
-      {/* Header with session type and task info - Clickable to return to full view */}
       <div 
-        className="flex items-center justify-between mb-2 cursor-pointer hover:bg-gray-50 rounded p-1 transition-colors group"
-        onClick={handleMiniModeToggle}
+        className="flex items-center justify-between mb-2 cursor-pointer hover:bg-gray-50 rounded p-1 transition-colors group border border-transparent hover:border-gray-300"
+        onClick={() => {
+          console.log('Mini timer header clicked!');
+          handleMiniModeToggle();
+        }}
         title="Click to return to full view"
+        style={{ cursor: 'pointer' }}
       >
         <div className="flex-1 min-w-0">
           <div className="text-xs font-medium text-gray-700 truncate group-hover:text-blue-600 transition-colors">
@@ -177,20 +129,16 @@ export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMi
             </div>
           )}
         </div>
-        {/* Animated progress indicator - shows timer is active */}
         <div className="w-3 h-3 rounded-full bg-blue-500 pomodoro-pulse"></div>
-        {/* Subtle hint that header is clickable */}
-        <div className="ml-2 text-xs text-gray-400 group-hover:text-blue-400 transition-colors">
-          ↖
+        <div className="ml-2 text-xs text-blue-500 group-hover:text-blue-600 transition-colors font-bold">
+          ↖ Full View
         </div>
       </div>
 
-      {/* Compact timer display - large enough to read easily */}
-      <div className="text-2xl font-bold text-gray-800 text-center mb-2">
+      <div className="text-2xl font-bold text-white text-center mb-2" style={{ color: '#ffffff' }}>
         {formatTime(minutes, seconds)}
       </div>
 
-      {/* Mini progress bar - shows completion percentage */}
       <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
         <div 
           className="bg-blue-600 h-1.5 rounded-full pomodoro-progress-bar"
@@ -198,7 +146,6 @@ export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMi
         ></div>
       </div>
 
-      {/* Essential controls - Start/Pause and Reset buttons */}
       <div className="flex gap-2">
         <button 
           className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
@@ -221,9 +168,19 @@ export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMi
     </div>
   ), [isBreak, taskTitle, minutes, seconds, getProgressPercentage, isRunning, handleMiniModeToggle, handleStart, handleStop, handleReset, formatTime]);
 
-  // Memoize the FullTimer component to prevent re-creation
+  // Memoize the FullTimer component
   const FullTimer = useMemo(() => (
-    <div className="pomodoro-full-timer flex flex-col items-center p-6 bg-white rounded-lg shadow-md">
+    <div className="pomodoro-full-timer flex flex-col items-center p-6 bg-white rounded-lg shadow-md relative">
+      {onClose && (
+        <button
+          type="button"
+          aria-label="Close"
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+          onClick={onClose}
+        >
+          ×
+        </button>
+      )}
       <div className="text-center mb-4">
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
           {isBreak ? 'Break Time' : 'Focus Session'}
@@ -233,7 +190,6 @@ export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMi
         )}
       </div>
 
-      {/* Duration settings - allows users to customize work and break times */}
       <div className="w-full grid grid-cols-2 gap-3 mb-4">
         <div>
           <label className="block text-xs text-gray-500 mb-1">Work (min)</label>
@@ -257,7 +213,6 @@ export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMi
         </div>
       </div>
 
-      {/* Progress Bar - visual representation of session completion */}
       <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
         <div 
           className="bg-blue-600 h-2 rounded-full pomodoro-progress-bar"
@@ -265,19 +220,16 @@ export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMi
         ></div>
       </div>
 
-      {/* Large timer display - easy to read from a distance */}
       <div className="text-4xl font-bold text-gray-800 mb-6">
         {formatTime(minutes, seconds)}
       </div>
 
-      {/* Session duration tracking - shows how long the current session has been running */}
       {isRunning && !isBreak && (
         <div className="text-sm text-gray-600 mb-4">
           Session duration: {Math.floor(sessionDuration / 60)}:{(sessionDuration % 60).toString().padStart(2, '0')}
         </div>
       )}
 
-      {/* Timer controls - Start/Pause and Reset buttons */}
       <div className="flex gap-3">
         <button 
           className={`px-6 py-2 rounded-lg font-medium transition-colors ${
@@ -298,17 +250,14 @@ export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMi
         </button>
       </div>
 
-      {/* Motivational status message */}
       <div className="mt-4 text-sm text-gray-500">
         {isBreak ? 'Take a break and relax!' : 'Stay focused and productive!'}
       </div>
     </div>
-  ), [isBreak, taskTitle, workDuration, breakDuration, getProgressPercentage, minutes, seconds, isRunning, sessionDuration, handleStart, handleStop, handleReset, formatTime, onChangeWorkDuration, onChangeBreakDuration]);
+  ), [isBreak, taskTitle, workDuration, breakDuration, getProgressPercentage, minutes, seconds, isRunning, sessionDuration, handleStart, handleStop, handleReset, formatTime, onChangeWorkDuration, onChangeBreakDuration, onClose]);
 
-  // Main render method - conditionally renders components based on state
   return (
     <div className="pomodoro-timer-container">
-      {/* Mini mode notification - appears when timer switches to mini mode */}
       {showMiniModeNotification && (
         <div className="pomodoro-notification fixed top-4 right-4 z-[9999] bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out animate-bounce">
           <div className="flex items-center gap-2">
@@ -323,10 +272,7 @@ export default function PomodoroTimer({ onComplete, initialMinutes = 25, breakMi
         </div>
       )}
       
-      {/* Render mini timer when in mini mode - fixed positioning for always-visible access */}
       {isMiniMode && MiniTimer}
-      
-      {/* Render full timer only when NOT in mini mode - prevents duplicate rendering */}
       {!isMiniMode && FullTimer}
     </div>
   );

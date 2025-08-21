@@ -21,6 +21,19 @@ export const TaskProvider = ({ children }) => {
     fetchTasks();
   }, []);
 
+  // Refresh tasks when a pomodoro session is logged
+  useEffect(() => {
+    const handler = () => fetchTasks();
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('pomodoro:sessionLogged', handler);
+    }
+    return () => {
+      if (typeof window !== 'undefined' && window.removeEventListener) {
+        window.removeEventListener('pomodoro:sessionLogged', handler);
+      }
+    };
+  }, []);
+
   const fetchTasks = async () => {
     try {
       setLoading(true);
